@@ -1,0 +1,14 @@
+# yaml, yml
+# -> 인프라의 설정에 많이 쓰임
+spring:
+  application:
+    name: springrefresh
+# JWT
+jwt:
+  # https://jwtsecrets.com/
+  secret: 1b74dc5799a601f263941314798ee3b5
+  # 만료일
+  # 1분 (테스트용)
+  access-token-expiration: 60000
+  # 5분 (테스트용)
+  refresh-token-expiration: 300000
