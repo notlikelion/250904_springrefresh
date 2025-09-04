@@ -25,6 +25,7 @@ public class JwtFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         // 1. 헤더에서 토큰을 추출
         String authorization = request.getHeader("Authorization");
+        System.out.println("authorization = " + authorization);
         // 2. 토큰이 있는지 찾아서 확인
 //        if (StringUtils.hasText(authorization))
 //        if (authorization.isBlank())
@@ -36,6 +37,7 @@ public class JwtFilter extends OncePerRequestFilter {
 //        String accessToken = authorization.substring(7);
         // authorization -> substring(5) rization, [5]부터 포함하는...
         String accessToken = authorization.substring("Bearer ".length());
+        System.out.println("accessToken = " + accessToken);
         // 4. 만료 여부 확인
         if (jwtUtil.isExpired(accessToken)) {
             filterChain.doFilter(request, response);
@@ -45,7 +47,7 @@ public class JwtFilter extends OncePerRequestFilter {
         String username = jwtUtil.getUsername(accessToken);
         String role = jwtUtil.getRole(accessToken);
         // 6. UserDetails를 생성
-        User user = new User(username, "", List.of(new SimpleGrantedAuthority(role))); // SGA
+        User user = new User(username, "", List.of(new SimpleGrantedAuthority("ROLE_" + role))); // SGA
         // 7. SecurityContext -> Spring Security 관리 Context에 설정
         Authentication authToken = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities()); // UPAT
         // SCH
