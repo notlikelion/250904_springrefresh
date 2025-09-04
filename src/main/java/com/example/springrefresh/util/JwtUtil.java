@@ -1,11 +1,13 @@
 package com.example.springrefresh.util;
 
+import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.util.Date;
 
 @Component // 의존성 주입 -> 컨테이너 등록
 public class JwtUtil {
@@ -30,4 +32,34 @@ public class JwtUtil {
         this.accessExpirationMs = accessExpirationMs;
         this.refreshExpirationMs = refreshExpirationMs;
     };
+
+//    public String createToken(String username, String role, boolean isRefreshToken) {
+//    public String createToken(String username, String role, boolean isAccessToken) {
+    public String createToken(String username, String role, String type) {
+        Date now = new Date();
+        // 만료일시가 분기가 되어야 한다
+        Long expiration = type.equals("access") ? accessExpirationMs : refreshExpirationMs; // access -> 짧은 걸 주고, 아니면 긴 걸 준다
+        Date expiryDate = new Date(now.getTime() + expiration);
+        return Jwts.builder()
+                .subject(username) // 로그인 정보
+                // claim
+                .claim("username", username)
+                .claim("role", role)
+                .issuedAt(now) // 발행일시
+                .expiration(expiryDate) // 만료일시
+                .signWith(secretKey) // 암호화
+                .compact();
+    }
+
+
+//    public String createAccessToken(String username) {
+//        Date now = new Date();
+//        Date expiryDate = new Date(now.getTime() + accessExpirationMs);
+//        return Jwts.builder()
+//                .subject(username) // 로그인 정보
+//                .issuedAt(now) // 발행일시
+//                .expiration(expiryDate) // 만료일시
+//                .signWith(secretKey) // 암호화
+//                .compact();
+//    }
 }
