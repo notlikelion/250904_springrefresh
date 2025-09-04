@@ -5,6 +5,7 @@ import com.example.springrefresh.util.JwtUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
@@ -12,18 +13,21 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthenticationManager authenticationManager;
-    private final RefreshTokenRepository refreshTokenRepository;
+//    private final RefreshTokenRepository refreshTokenRepository;
+    private final RedisTemplate<String, String> redisTemplate;
     private final JwtUtil jwtUtil;
 
     public record LoginRequest(String username, String password) {}
@@ -46,7 +50,13 @@ public class AuthController {
         String refreshToken = jwtUtil.createToken(username, role, "refresh");
 
         // 리프레시 토큰 -> 서버 관리
-        refreshTokenRepository.save(username, refreshToken);
+//        refreshTokenRepository.save(username, refreshToken);
+        redisTemplate.opsForValue().set(
+                username, // key
+                refreshToken, // value - 여기까지만 입력해도 되지만...
+                refreshExpirationMs, // TTL
+                TimeUnit.MILLISECONDS
+        );
 
         // 쿠키에 담아주는 과정
         response.addHeader("Set-Cookie", createCookie("refreshToken", refreshToken).toString());
@@ -82,9 +92,11 @@ public class AuthController {
         String username = jwtUtil.getUsername(refreshToken);
         String role = jwtUtil.getRole(refreshToken);
 
-        String savedToken = refreshTokenRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("서버에 저장되지 않은 토큰"));
-        if (!savedToken.equals(refreshToken)) {
+//        String savedToken = refreshTokenRepository.findByUsername(username)
+//                .orElseThrow(() -> new RuntimeException("서버에 저장되지 않은 토큰"));
+        String savedToken = redisTemplate.opsForValue().get(username);
+        if (!StringUtils.hasText(savedToken)) {
+//        if (!savedToken.equals(refreshToken)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
                     "error", "토큰 불일치"
             ));
@@ -98,7 +110,13 @@ public class AuthController {
         String newRefreshToken = jwtUtil.createToken(username, role, "refresh");
 
         // 리프레시 토큰 -> 서버 관리
-        refreshTokenRepository.save(username, newRefreshToken);
+//        refreshTokenRepository.save(username, newRefreshToken);
+        redisTemplate.opsForValue().set(
+                username, // key
+                newRefreshToken, // value - 여기까지만 입력해도 되지만...
+                refreshExpirationMs, // TTL
+                TimeUnit.MILLISECONDS
+        );
 
         // 쿠키에 담아주는 과정
         response.addHeader("Set-Cookie", createCookie("refreshToken", newRefreshToken).toString());

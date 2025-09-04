@@ -41,6 +41,13 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
     // https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-jackson
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
+
+    // Redis
+    // https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-data-redis
+    // 1. 중앙 세션, 저장소 역할을 공통해야할 때 [o]
+    // 2. 캐싱 -> 자주 사용하는 데이터, 조회에 대해서 임시저장 혹은 바로 호출
+    // 3. 트랜지션 상황에서 분산락
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 }
 
 tasks.named('test') {
