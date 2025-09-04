@@ -1,5 +1,6 @@
 package com.example.springrefresh.util;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -51,7 +52,6 @@ public class JwtUtil {
                 .compact();
     }
 
-
 //    public String createAccessToken(String username) {
 //        Date now = new Date();
 //        Date expiryDate = new Date(now.getTime() + accessExpirationMs);
@@ -62,4 +62,23 @@ public class JwtUtil {
 //                .signWith(secretKey) // 암호화
 //                .compact();
 //    }
+
+    public Claims getClaims(String token) {
+        return Jwts.parser().verifyWith(secretKey)
+                .build().parseSignedClaims(token).getPayload();
+    }
+
+    // 토큰에서 사용자 이름 추출
+    public String getUsername(String token) {
+//        return getClaims(token).getSubject(); // subject -> username
+        return getClaims(token).get("username", String.class);
+        // .claim("username", username)
+    }
+
+    // 토큰에서 역할 추출
+    public String getRole(String token) {
+//        return getClaims(token).getSubject(); // subject -> username
+        return getClaims(token).get("role", String.class);
+        // .claim("role", role)
+    }
 }
